@@ -2,7 +2,6 @@ using System;
 using System.Linq;
 using System.Text;
 using Pizza.Utils;
-using static System.Math;
 
 namespace Pizza.Models
 {
@@ -122,14 +121,14 @@ namespace Pizza.Models
         {
             get
             {
-                var maxNumberOfSlice = Min(MushroomCount, TomatoCount)/_slicingContext.MinimumIngredientCount;
-                return Min(Size, maxNumberOfSlice*_slicingContext.MaximumSliceSize);
+                var maxNumberOfSlice = Math.Min(MushroomCount, TomatoCount)/_slicingContext.MinimumIngredientCount;
+                return Math.Min(Size, maxNumberOfSlice*_slicingContext.MaximumSliceSize);
             }
         }
 
         #endregion
 
-        public SlicingChallengeResponse FindBestWayToCut(bool allowParallelism = true)
+        public SlicingChallengeResponse FindBestWayToCut()
         {
             if (IsValid)
             {
@@ -143,8 +142,6 @@ namespace Pizza.Models
             {
                 return SlicingChallengeResponse.Empty;
             }
-
-            var parallelOrNot = ParallelismHelper.ForEach<WayToCut>(allowParallelism);
             
             var bestWayToCut = SlicingChallengeResponse.Empty;
 
@@ -155,24 +152,36 @@ namespace Pizza.Models
 
             var allPossibleWayToCut = horizontalWayToCut.Union(verticalWayToCut).ToList();
 
-            parallelOrNot(allPossibleWayToCut, (cut =>
+            var bestSlicesCandidates = allPossibleWayToCut.Select(cut =>
             {
                 var tmp = Cut(cut.Direction, cut.SliceSize);
+                return new {
+                        Slice1 = tmp.Item1,
+                        Slice2 = tmp.Item2,
+                        MaxPossiblePoints = tmp.Item1.MaxPossiblePoints + tmp.Item2.MaxPossiblePoints
+                    };
+            }).OrderByDescending(x => x.MaxPossiblePoints).Take((int) Math.Ceiling(allPossibleWayToCut.Count*0.2)).ToList();
 
-                var slice1 = tmp.Item1;
-                var slice2 = tmp.Item2;
+            foreach (var slices in bestSlicesCandidates)
+            {
+                var bestWayToCutSlice1 = slices.Slice1.FindBestWayToCut();
+                var bestWayToCutSlice2 = slices.Slice2.FindBestWayToCut();
 
-                var bestWayToCutTop = slice1.FindBestWayToCut(false);
-                var bestWayToCutBot = slice2.FindBestWayToCut(false);
-
-                if (bestWayToCutTop.PointEarned + bestWayToCutBot.PointEarned > bestWayToCut.PointEarned)
+                if (bestWayToCutSlice1.PointEarned + bestWayToCutSlice2.PointEarned > bestWayToCut.PointEarned)
                 {
                     bestWayToCut = new SlicingChallengeResponse
                     {
-                        ValidSlices = bestWayToCutTop.ValidSlices.Union(bestWayToCutBot.ValidSlices).ToList()
+                        ValidSlices = bestWayToCutSlice1.ValidSlices.Union(bestWayToCutSlice2.ValidSlices).ToList()
                     };
                 }
-            }));
+
+                if (bestWayToCutSlice1.PointEarned == slices.Slice1.MaxPossiblePoints
+                    && bestWayToCutSlice2.PointEarned == slices.Slice2.MaxPossiblePoints)
+                {
+                    //Found a optimal way to cut this
+                    break;
+                }
+            }
 
             return bestWayToCut;
         }

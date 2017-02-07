@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Linq;
 using NFluent;
 using NUnit.Framework;
 using Pizza.Models;
+using Pizza.Utils;
 
 namespace PizzaTests
 {
@@ -55,13 +57,31 @@ namespace PizzaTests
             Check.That(cutStrat.ValidSlices).HasSize(3);
         }
 
-        [Test, Explicit]
+        [Test]
         public void Find_Best_Way_To_Cut_Small()
         {
             var pizzaString = "6 7 1 5,TMMMTTT,MMMMTMM,TTMTTMT,TMMTMMM,TTTTTTM,TTTTTTM".Replace(",", Environment.NewLine);
-            var originalSlice = PizzaParser.Parse(pizzaString).ToSlice();
 
+            var originalSlice = PizzaParser.Parse(pizzaString).ToSlice();
             var cutStrat = originalSlice.FindBestWayToCut();
+            Check.That(cutStrat.PointEarned).IsEqualTo(42);            
+        }
+
+        [Test, Explicit]
+        public void Pseudo_Perf_Test()
+        {
+            var pizzaString = "6 7 1 5,TMMMTTT,MMMMTMM,TTMTTMT,TMMTMMM,TTTTTTM,TTTTTTM".Replace(",", Environment.NewLine);
+
+            Enumerable
+                .Range(0, 10000)
+                .ForEach(
+                    _ =>
+                    {
+                        var originalSlice = PizzaParser.Parse(pizzaString).ToSlice();
+                        var cutStrat = originalSlice.FindBestWayToCut();
+                        Check.That(cutStrat.PointEarned).IsEqualTo(42);
+                    });
+
         }
     }
 }

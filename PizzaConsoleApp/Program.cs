@@ -9,14 +9,13 @@ namespace PizzaConsoleApp
     {
         static void Main(string[] args)
         {
-            var inputFile = @"D:\Workspace\CSharp\GoogleHashCode2017\PizzaConsoleApp\input\small.in";
+            var inputFile = @"D:\Workspace\Github\GoogleHashCode2017\PizzaConsoleApp\input\02-medium.in";
 
             var outputFile = Path.ChangeExtension(inputFile, ".out");
 
             var slice = PizzaParser.ParseFile(inputFile).ToSlice();
 
             var stopwatch = Stopwatch.StartNew();
-
             var bestWayToCut = slice.FindBestWayToCut();
             stopwatch.Stop();
 

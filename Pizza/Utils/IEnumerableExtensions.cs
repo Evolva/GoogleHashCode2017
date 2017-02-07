@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Pizza.Utils
 {
@@ -22,18 +21,6 @@ namespace Pizza.Utils
                 actionWithIndex(item, index);
                 index += 1;
             }
-        }
-    }
-
-    public static class ParallelismHelper
-    {
-        public static Action<IEnumerable<T>, Action<T>> ForEach<T>(bool parallel)
-        {
-            if (parallel)
-            {
-                return (source, action) => Parallel.ForEach(source, action);
-            }
-            return (source, action) => source.ForEach(action);
         }
     }
 }
