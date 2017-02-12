@@ -26,7 +26,7 @@ namespace Pizza.Models
 
             ValidSlices.ForEach(slice =>
             {
-                sb.AppendLine($"{slice.TopLeftRow} {slice.TopLeftCol} {slice.BottomRightRow} {slice.BottomRightCol}");
+                sb.AppendLine($"{slice.TopLeft.Row} {slice.TopLeft.Column} {slice.BottomRight.Row} {slice.BottomRight.Column}");
             });
 
             return sb.ToString();

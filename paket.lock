@@ -1,5 +1,6 @@
 FRAMEWORK: NET452
 NUGET
   remote: https://www.nuget.org/api/v2
+    CommandLineParser (1.9.71)
     NFluent (1.3.1)
     NUnit (3.6)

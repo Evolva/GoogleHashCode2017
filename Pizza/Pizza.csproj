@@ -40,14 +40,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\Coordinate.cs" />
+    <Compile Include="Models\SliceConstraints.cs" />
+    <Compile Include="SlicerOptimizer.cs" />
     <Compile Include="Models\SlicingChallengeResponse.cs" />
     <Compile Include="Models\Direction.cs" />
     <Compile Include="Utils\IngredientExtensions.cs" />
-    <Compile Include="Utils\IEnumerableExtensions.cs" />
+    <Compile Include="Utils\EnumerableExtensions.cs" />
     <Compile Include="Models\Ingredient.cs" />
     <Compile Include="Models\Pizza.cs" />
-    <Compile Include="Models\SlicingContext.cs" />
-    <Compile Include="Models\PizzaParser.cs" />
+    <Compile Include="ParsingResult.cs" />
+    <Compile Include="PizzaParser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Models\Slice.cs" />
     <Compile Include="Models\WayToCut.cs" />

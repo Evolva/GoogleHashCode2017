@@ -1,5 +1,4 @@
 using System;
-using System.Linq;
 using System.Text;
 using Pizza.Utils;
 
@@ -7,23 +6,20 @@ namespace Pizza.Models
 {
     public class Slice
     {
-        private readonly SlicingContext _slicingContext;
+        private readonly Pizza _parsingResult;
 
-        public Slice(SlicingContext context, int topLeftCol, int topLeftRow, int bottomRightCol, int bottomRightRow)
+        public Slice(Pizza context, Coordinate topLeft, Coordinate bottomRight)
         {
-            _slicingContext = context;
+            _parsingResult = context;
 
-            TopLeftCol = topLeftCol;
-            TopLeftRow = topLeftRow;
+            TopLeft = topLeft;
+            BottomRight = bottomRight;
 
-            BottomRightCol = bottomRightCol;
-            BottomRightRow = bottomRightRow;
-
-            for (var col = TopLeftCol; col <= BottomRightCol; col++)
+            for (var col = TopLeft.Column; col <= BottomRight.Column; col++)
             {
-                for (var row = TopLeftRow; row <= BottomRightRow; row++)
+                for (var row = TopLeft.Row; row <= BottomRight.Row; row++)
                 {
-                    var ingredient = _slicingContext.Pizza.GetIngredientAt(col: col, row: row);
+                    var ingredient = _parsingResult.GetIngredientAt(new Coordinate(col, row));
 
                     switch (ingredient)
                     {
@@ -54,12 +50,12 @@ namespace Pizza.Models
                         $"0 < {nameof(firstSliceSize)} < {Height} (Height)");
                 }
 
-                slice1 = new Slice(_slicingContext,
-                    TopLeftCol, TopLeftRow,
-                    BottomRightCol, TopLeftRow + firstSliceSize - 1);
-                slice2 = new Slice(_slicingContext,
-                    TopLeftCol, TopLeftRow + firstSliceSize,
-                    BottomRightCol, BottomRightRow);
+                slice1 = new Slice(_parsingResult,
+                    new Coordinate(TopLeft.Column, TopLeft.Row),
+                    new Coordinate(BottomRight.Column, TopLeft.Row + firstSliceSize - 1));
+                slice2 = new Slice(_parsingResult,
+                    new Coordinate(TopLeft.Column, TopLeft.Row + firstSliceSize),
+                    new Coordinate(BottomRight.Column, BottomRight.Row));
             }
             else
             {
@@ -72,12 +68,12 @@ namespace Pizza.Models
                 }
 
 
-                slice1 = new Slice(_slicingContext,
-                    TopLeftCol, TopLeftRow,
-                    TopLeftCol + firstSliceSize - 1, BottomRightRow);
-                slice2 = new Slice(_slicingContext,
-                    TopLeftCol + firstSliceSize, TopLeftRow,
-                    BottomRightCol, BottomRightRow);
+                slice1 = new Slice(_parsingResult,
+                    new Coordinate(TopLeft.Column, TopLeft.Row),
+                    new Coordinate(TopLeft.Column + firstSliceSize - 1, BottomRight.Row));
+                slice2 = new Slice(_parsingResult,
+                    new Coordinate(TopLeft.Column + firstSliceSize, TopLeft.Row),
+                    new Coordinate(BottomRight.Column, BottomRight.Row));
             }
 
             return Tuple.Create(slice1, slice2);
@@ -87,11 +83,11 @@ namespace Pizza.Models
         {
             var sb = new StringBuilder();
 
-            for (var row = TopLeftRow; row <= BottomRightRow; row++)
+            for (var row = TopLeft.Row; row <= BottomRight.Row; row++)
             {
-                for (var col = TopLeftCol; col <= BottomRightCol; col++)
+                for (var col = TopLeft.Column; col <= BottomRight.Column; col++)
                 {
-                    sb.Append(_slicingContext.Pizza.GetIngredientAt(col: col, row: row).ToSingleCharString());
+                    sb.Append(_parsingResult.GetIngredientAt(new Coordinate(col, row)).ToSingleCharString());
                 }
                 sb.AppendLine();
             }
@@ -100,90 +96,16 @@ namespace Pizza.Models
         }
 
         #region Properties
-        public int TopLeftCol { get; }
-        public int TopLeftRow { get; }
-        public int BottomRightCol { get; }
-        public int BottomRightRow { get; }
+        public Coordinate TopLeft { get; }
 
-        public int Width => BottomRightCol - TopLeftCol + 1;
-        public int Height => BottomRightRow - TopLeftRow + 1;
+        public Coordinate BottomRight { get; }
+
+        public int Width => BottomRight.Column - TopLeft.Column + 1;
+        public int Height => BottomRight.Row - TopLeft.Row + 1;
         public int Size => Width * Height;
 
         public int TomatoCount { get; }
         public int MushroomCount { get; }
-
-        public bool IsValid => IsSmallEnough && HaveRequestedIngredient;
-        private bool IsSmallEnough => Size <= _slicingContext.MaximumSliceSize;
-        private bool HaveRequestedIngredient => MushroomCount >= _slicingContext.MinimumIngredientCount
-                   && TomatoCount >= _slicingContext.MinimumIngredientCount;
-
-        public int MaxPossiblePoints
-        {
-            get
-            {
-                var maxNumberOfSlice = Math.Min(MushroomCount, TomatoCount)/_slicingContext.MinimumIngredientCount;
-                return Math.Min(Size, maxNumberOfSlice*_slicingContext.MaximumSliceSize);
-            }
-        }
-
         #endregion
-
-        public SlicingChallengeResponse FindBestWayToCut()
-        {
-            if (IsValid)
-            {
-                return new SlicingChallengeResponse
-                {
-                    ValidSlices = { this }
-                };
-            }
-
-            if (!HaveRequestedIngredient)
-            {
-                return SlicingChallengeResponse.Empty;
-            }
-            
-            var bestWayToCut = SlicingChallengeResponse.Empty;
-
-            var horizontalWayToCut = Enumerable.Range(1, Height - 1)
-                .Select(i => new WayToCut{Direction = Direction.Horizontal, SliceSize = i});
-            var verticalWayToCut = Enumerable.Range(1, Width - 1)
-                .Select(i => new WayToCut { Direction = Direction.Vertical, SliceSize = i });
-
-            var allPossibleWayToCut = horizontalWayToCut.Union(verticalWayToCut).ToList();
-
-            var bestSlicesCandidates = allPossibleWayToCut.Select(cut =>
-            {
-                var tmp = Cut(cut.Direction, cut.SliceSize);
-                return new {
-                        Slice1 = tmp.Item1,
-                        Slice2 = tmp.Item2,
-                        MaxPossiblePoints = tmp.Item1.MaxPossiblePoints + tmp.Item2.MaxPossiblePoints
-                    };
-            }).OrderByDescending(x => x.MaxPossiblePoints).Take((int) Math.Ceiling(allPossibleWayToCut.Count*0.2)).ToList();
-
-            foreach (var slices in bestSlicesCandidates)
-            {
-                var bestWayToCutSlice1 = slices.Slice1.FindBestWayToCut();
-                var bestWayToCutSlice2 = slices.Slice2.FindBestWayToCut();
-
-                if (bestWayToCutSlice1.PointEarned + bestWayToCutSlice2.PointEarned > bestWayToCut.PointEarned)
-                {
-                    bestWayToCut = new SlicingChallengeResponse
-                    {
-                        ValidSlices = bestWayToCutSlice1.ValidSlices.Union(bestWayToCutSlice2.ValidSlices).ToList()
-                    };
-                }
-
-                if (bestWayToCutSlice1.PointEarned == slices.Slice1.MaxPossiblePoints
-                    && bestWayToCutSlice2.PointEarned == slices.Slice2.MaxPossiblePoints)
-                {
-                    //Found a optimal way to cut this
-                    break;
-                }
-            }
-
-            return bestWayToCut;
-        }
     }
 }

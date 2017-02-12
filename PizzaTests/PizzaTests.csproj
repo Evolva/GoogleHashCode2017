@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="PizzaParserTests.cs" />
     <Compile Include="SliceFindBestWayToCutTests.cs" />
+    <Compile Include="SlicerOptimizerTests.cs" />
     <Compile Include="SliceTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

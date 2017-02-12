@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using CommandLine;
+using Pizza;
 using Pizza.Models;
 
 namespace PizzaConsoleApp
@@ -9,23 +11,37 @@ namespace PizzaConsoleApp
     {
         static void Main(string[] args)
         {
-            var inputFile = @"D:\Workspace\Github\GoogleHashCode2017\PizzaConsoleApp\input\02-medium.in";
+            var cliArguments = new CliArguments();
+            if (!Parser.Default.ParseArguments(args, cliArguments))
+            {
+                Environment.Exit(1);
+            }
 
+            var inputFile = cliArguments.FilePath;
             var outputFile = Path.ChangeExtension(inputFile, ".out");
+            var metadataFile = Path.ChangeExtension(inputFile, ".metadata");
 
-            var slice = PizzaParser.ParseFile(inputFile).ToSlice();
+            var parsingResult = PizzaParser.ParseFile(inputFile);
+            Slice slice = parsingResult.Pizza;
+
+            Action<SlicingChallengeResponse> actionOnNewMax = _ => { };
+            if (cliArguments.PrintNewMax) actionOnNewMax = newMax =>
+            {
+                Console.WriteLine($"[{newMax.PointEarned}]");
+                Console.WriteLine(newMax.ToOutputString());
+            };
 
             var stopwatch = Stopwatch.StartNew();
-            var bestWayToCut = slice.FindBestWayToCut();
+            var bestWayToCut = new SlicerOptimizer(parsingResult.Constraints, actionOnNewMax).FindBestWayToCut(slice);
             stopwatch.Stop();
 
             File.WriteAllText(outputFile, bestWayToCut.ToOutputString());
 
             var elapsed = stopwatch.Elapsed;
-            Console.WriteLine($"Slicing took : {elapsed.Hours}H {elapsed.Minutes}M {elapsed.Seconds}S {elapsed.Milliseconds}MS");
-            Console.WriteLine($"{bestWayToCut.PointEarned} / {slice.Size} ({bestWayToCut.PointEarned / slice.Size:P})");
 
-            Console.ReadKey();
+            File.WriteAllText(metadataFile,
+                $@"Slicing took : {elapsed.Hours}H {elapsed.Minutes}M {elapsed.Seconds}S {elapsed.Milliseconds}MS
+{bestWayToCut.PointEarned} / {slice.Size} ({bestWayToCut.PointEarned / slice.Size:P})");
         }
     }
 }

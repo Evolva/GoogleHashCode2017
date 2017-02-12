@@ -2,15 +2,16 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Pizza.Models;
 using Pizza.Utils;
 
-namespace Pizza.Models
+namespace Pizza
 {
     public class PizzaParser
     {
         private static readonly Regex MetadataRegex = new Regex(@"(?<line>\d+) (?<column>\d+) (?<ingredient>\d+) (?<slicesize>\d+)");
 
-        private static SlicingContext Parse(TextReader textReader)
+        private static ParsingResult Parse(TextReader textReader)
         {
             var metadata = textReader.ReadLine();
 
@@ -39,17 +40,23 @@ namespace Pizza.Models
                 throw new InvalidOperationException();
             }
 
-            var pizza = new Pizza(nbLine, nbColumn, ingredients);
+            var pizza = new Models.Pizza(nbLine, nbColumn, ingredients);
 
-            return new SlicingContext(maxSliceSize, minIngredient, pizza);
+            return new ParsingResult(pizza, new SliceConstraints(maxSliceSize, minIngredient));
         }
 
-        public static SlicingContext Parse(string content)
+        public static ParsingResult Parse(string content)
         {
             return Parse(new StringReader(content));
         }
 
-        public static SlicingContext ParseFile(string filePath)
+        public static ParsingResult ParseOneLineString(string oneLineString, string separator = ",")
+        {
+            var content = oneLineString.Replace(separator, Environment.NewLine);
+            return Parse(new StringReader(content));
+        }
+
+        public static ParsingResult ParseFile(string filePath)
         {
             return Parse(new StreamReader(File.OpenRead(filePath)));
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace Pizza.Utils
 {
-    public static class IEnumerableExtensions
+    public static class EnumerableExtensions
     {
         public static void ForEach<T>(this IEnumerable<T> source, Action<T> action)
         {

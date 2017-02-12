@@ -12,14 +12,16 @@
             Line = line;
             Column = column;
             _ingredients = ingredients;
-
         }
 
-        public Ingredient GetIngredientAt(int col, int row)
+        public Ingredient GetIngredientAt(Coordinate coordinate)
         {
-            return _ingredients[col + row * Column];
+            return _ingredients[coordinate.Column + coordinate.Row * Column];
         }
 
-        public Ingredient this[int col, int row] => GetIngredientAt(col, row);
+        public static implicit operator Slice(Pizza pizza)
+        {
+            return new Slice(pizza, new Coordinate(0, 0), new Coordinate(pizza.Column - 1, pizza.Line - 1));
+        }
     }
 }
