@@ -1,6 +1,6 @@
 namespace Pizza.Models
 {
-    public struct Coordinate
+    public class Coordinate
     {
         public int Column { get; }
         public int Row { get; }

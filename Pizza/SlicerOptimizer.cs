@@ -7,15 +7,15 @@ namespace Pizza
     public class SlicerOptimizer
     {
         private readonly SliceConstraints _constraints;
-        private readonly Action<SlicingChallengeResponse> _actionOnNewMax;
+        private readonly double _keepToPercent;
 
-        public SlicerOptimizer(SliceConstraints constraints, Action<SlicingChallengeResponse> actionOnNewMax = null)
+        public SlicerOptimizer(SliceConstraints constraints, double keepToPercent = 0.2)
         {
             _constraints = constraints;
-            _actionOnNewMax = actionOnNewMax ?? (_ => { }) ;
+            _keepToPercent = keepToPercent;
         }
 
-        public SlicingChallengeResponse FindBestWayToCut(Slice slice, bool shouldCallAction = true)
+        public SlicingChallengeResponse FindBestWayToCut(Slice slice)
         {
             if (IsValid(slice)) return new SlicingChallengeResponse { ValidSlices = { slice } };
             if (!HaveRequestedIngredient(slice)) return SlicingChallengeResponse.Empty;
@@ -38,7 +38,10 @@ namespace Pizza
                     Slice2 = sliced.Item2,
                     MaxPossiblePoints = MaxPossiblePoints(sliced.Item1) + MaxPossiblePoints(sliced.Item2)
                 };
-            }).OrderByDescending(x => x.MaxPossiblePoints).Take((int)Math.Ceiling(allPossibleWayToCut.Count * 0.2)).ToList();
+            })
+            .Where(x => x.MaxPossiblePoints > 0)
+            .OrderByDescending(x => x.MaxPossiblePoints)
+            .Take(Math.Max(1, (int)Math.Ceiling(allPossibleWayToCut.Count * _keepToPercent))).ToList();
 
             foreach (var slices in bestSlicesCandidates)
             {
@@ -48,8 +51,8 @@ namespace Pizza
                     break;
                 }
 
-                var bestWayToCutSlice1 = FindBestWayToCut(slices.Slice1, shouldCallAction: false);
-                var bestWayToCutSlice2 = FindBestWayToCut(slices.Slice2, shouldCallAction: false);
+                var bestWayToCutSlice1 = FindBestWayToCut(slices.Slice1);
+                var bestWayToCutSlice2 = FindBestWayToCut(slices.Slice2);
 
                 if (bestWayToCutSlice1.PointEarned + bestWayToCutSlice2.PointEarned > bestWayToCut.PointEarned)
                 {
@@ -57,8 +60,6 @@ namespace Pizza
                     {
                         ValidSlices = bestWayToCutSlice1.ValidSlices.Union(bestWayToCutSlice2.ValidSlices).ToList()
                     };
-
-                    if (shouldCallAction) _actionOnNewMax(bestWayToCut);
                 }
             }
 

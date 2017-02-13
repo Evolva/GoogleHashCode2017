@@ -7,7 +7,7 @@ namespace PizzaConsoleApp
         [Option(shortName: 'f', longName: "file", Required = true, HelpText = "input file")]
         public string FilePath { get; set; }
 
-        [Option(shortName: 'v', longName: "verbose", Required = false, DefaultValue = false, HelpText = "Print each new best way to cut to stdout")]
-        public bool PrintNewMax { get; set; }
+        [Option(shortName: 't', longName: "topPercent", Required = false, DefaultValue = 0.2, HelpText = "Top percent")]
+        public double TopPercent { get; set; }
     }
 }

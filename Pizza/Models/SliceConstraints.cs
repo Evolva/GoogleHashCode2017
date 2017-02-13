@@ -1,6 +1,6 @@
 ﻿namespace Pizza.Models
 {
-    public struct SliceConstraints
+    public class SliceConstraints
     {
         public int MaximumSliceSize { get; }
         public int MinimumIngredientCount { get; }
